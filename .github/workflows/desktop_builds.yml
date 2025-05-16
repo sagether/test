@@ -1,0 +1,285 @@
+name: Build Desktop Apps  # Workflow name
+
+on:
+  # Define events that trigger the workflow
+  push:
+    branches: [ "main" ] # Triggered when code is pushed to main branch
+  pull_request:
+    branches: [ "main" ] # Triggered when pull request is made to main branch
+  workflow_dispatch: # Allow manual triggering from GitHub Actions UI
+
+jobs:
+  # --- Build Windows version ---
+  build-windows:
+    name: Build Windows App # Job name
+    runs-on: windows-latest # Specify job runs on latest Windows OS
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4 # Get code
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Use stable channel
+
+      - name: Enable Windows Desktop # Ensure Windows desktop support is enabled
+        run: flutter config --enable-windows-desktop
+
+      - name: Get Dependencies # Get project dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release # Build Windows release version
+        run: flutter build windows --release
+
+      - name: Package Windows Application # Package Windows app with all dependencies
+        run: |
+          # Set path variables
+          $appName = "Tains"
+          $buildDir = "build\windows\x64\runner\Release"
+          $distDir = "build\windows\dist\$appName"
+          
+          # Create release directory
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+          
+          # Copy main executable and DLLs to release directory
+          Copy-Item "$buildDir\*.exe" -Destination $distDir
+          Copy-Item "$buildDir\*.dll" -Destination $distDir
+          
+          # Check if flutter_windows.dll exists, copy if not
+          if (-Not (Test-Path "$distDir\flutter_windows.dll")) {
+            Write-Host "Warning: flutter_windows.dll not in release directory, trying to copy..."
+            
+            # Find Flutter engine directory
+            $engineDir = Get-ChildItem -Path "build\windows" -Recurse -Filter "flutter_windows.dll" | 
+                         Select-Object -First 1 | ForEach-Object { Split-Path -Parent $_.FullName }
+            
+            if ($engineDir) {
+              Write-Host "Found Flutter engine directory: $engineDir"
+              # Copy all DLL files
+              Get-ChildItem -Path $engineDir -Filter "*.dll" | ForEach-Object {
+                Copy-Item $_.FullName -Destination "$distDir\"
+                Write-Host "Copied $($_.Name) to release directory"
+              }
+            } else {
+              Write-Host "Error: Cannot find Flutter engine directory"
+              exit 1
+            }
+          }
+          
+          # Copy data directory (contains Flutter resources)
+          if (Test-Path "$buildDir\data") {
+            Copy-Item "$buildDir\data" -Destination "$distDir\" -Recurse
+          } else {
+            Write-Host "Warning: No data directory in build directory, trying to find in other locations..."
+            $dataDir = Get-ChildItem -Path "build\windows" -Recurse -Filter "icudtl.dat" | 
+                      Select-Object -First 1 | ForEach-Object { Split-Path -Parent $_.FullName }
+            
+            if ($dataDir) {
+              Write-Host "Found directory with Flutter resources: $dataDir"
+              New-Item -ItemType Directory -Force -Path "$distDir\data" | Out-Null
+              Copy-Item "$dataDir\*" -Destination "$distDir\data\" -Recurse
+            }
+          }
+          
+          # Create ZIP archive
+          Compress-Archive -Path "$distDir\*" -DestinationPath "build\windows\$appName.zip" -Force
+          
+          # List all files in release directory for debugging
+          Write-Host "Files in release directory:"
+          Get-ChildItem -Path $distDir -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Create MSI Installer # 创建MSI安装包
+        shell: powershell
+        run: |
+          # Install WiX Toolset
+          choco install wixtoolset -y
+          
+          # Check WiX Toolset installation path
+          $wixPath = Get-ChildItem -Path "C:\Program Files (x86)" -Filter "WiX Toolset*" | Select-Object -First 1 -ExpandProperty FullName
+          if (-Not $wixPath) {
+            Write-Host "WiX Toolset not found in C:\Program Files (x86), trying other locations..."
+            $wixPath = Get-ChildItem -Path "C:\Program Files" -Filter "WiX Toolset*" | Select-Object -First 1 -ExpandProperty FullName
+          }
+          
+          if ($wixPath) {
+            Write-Host "Found WiX Toolset path: $wixPath"
+            $env:PATH += ";$wixPath\bin"
+            $wixBin = "$wixPath\bin"
+          } else {
+            Write-Host "WiX installation directory not found, trying to locate tools with where command..."
+            $heatPath = & where.exe heat 2>$null
+            $candlePath = & where.exe candle 2>$null
+            $lightPath = & where.exe light 2>$null
+            
+            if ($heatPath -and $candlePath -and $lightPath) {
+              $wixBin = Split-Path -Parent $heatPath
+              Write-Host "Found WiX tools directory: $wixBin"
+            } else {
+              Write-Host "Using default WiX Toolset path"
+              $wixBin = "C:\Program Files (x86)\WiX Toolset v3.14\bin"
+              $env:PATH += ";$wixBin"
+            }
+          }
+          
+          # Check if build directory exists
+          if (-Not (Test-Path "build\windows\dist\Tains")) {
+            Write-Error "Error: Build directory build\windows\dist\Tains does not exist!"
+            exit 1
+          }
+          
+          $sourcePath = [System.IO.Path]::GetFullPath("build\windows\dist\Tains")
+          Write-Host "Using source path: $sourcePath"
+          $currentDir = Get-Location
+          Write-Host "Current working directory: $currentDir"
+          
+          # Create temp directory
+          New-Item -ItemType Directory -Force -Path "temp" | Out-Null
+          
+          # 创建批处理脚本内容 - 避免使用here-string和中文字符
+          $scriptLines = @()
+          $scriptLines += "@echo off"
+          $scriptLines += "echo Creating MSI installer..."
+          $scriptLines += ""
+          $scriptLines += "rem Set WiX tool path and source directory"
+          $scriptLines += "set WIX=$($wixBin.Replace('\', '\\'))"
+          $scriptLines += "set SOURCE=$($sourcePath.Replace('\', '\\'))"
+          $scriptLines += "set OUTPUT=build\windows\Tains.msi"
+          $scriptLines += ""
+          $scriptLines += "rem Create temp directory"
+          $scriptLines += "mkdir temp 2>nul"
+          $scriptLines += ""
+          $scriptLines += "rem Collect files from source directory"
+          $scriptLines += "`"%WIX%\heat.exe`" dir `"%SOURCE%`" -nologo -sfrag -srd -scom -gg -g1 -ke -dr INSTALLFOLDER -cg ApplicationFiles -out temp\files.wxs -v"
+          $scriptLines += ""
+          $scriptLines += "rem Create WXS file"
+          $scriptLines += "echo ^<?xml version=`"1.0`" encoding=`"UTF-8`"?^> > temp\main.wxs"
+          $scriptLines += "echo ^<Wix xmlns=`"http://schemas.microsoft.com/wix/2006/wi`"^> >> temp\main.wxs"
+          $scriptLines += "echo   ^<Product Id=`"*`" Name=`"Tains`" Language=`"1033`" Version=`"1.0.0`" Manufacturer=`"Tains`" UpgradeCode=`"BA19B5DF-D896-4760-8FD4-83ECB6799162`"^> >> temp\main.wxs"
+          $scriptLines += "echo     ^<Package InstallerVersion=`"200`" Compressed=`"yes`" InstallScope=`"perMachine`" /^> >> temp\main.wxs"
+          $scriptLines += "echo     ^<MajorUpgrade DowngradeErrorMessage=`"A newer version is already installed.`" /^> >> temp\main.wxs"
+          $scriptLines += "echo     ^<MediaTemplate EmbedCab=`"yes`" /^> >> temp\main.wxs"
+          $scriptLines += "echo     ^<Feature Id=`"ProductFeature`" Title=`"Tains`" Level=`"1`"^> >> temp\main.wxs"
+          $scriptLines += "echo       ^<ComponentGroupRef Id=`"ApplicationFiles`" /^> >> temp\main.wxs"
+          $scriptLines += "echo       ^<ComponentRef Id=`"ApplicationShortcut`" /^> >> temp\main.wxs"
+          $scriptLines += "echo     ^</Feature^> >> temp\main.wxs"
+          $scriptLines += "echo     ^<Directory Id=`"TARGETDIR`" Name=`"SourceDir`"^> >> temp\main.wxs"
+          $scriptLines += "echo       ^<Directory Id=`"ProgramFilesFolder`"^> >> temp\main.wxs"
+          $scriptLines += "echo         ^<Directory Id=`"INSTALLFOLDER`" Name=`"Tains`" /^> >> temp\main.wxs"
+          $scriptLines += "echo       ^</Directory^> >> temp\main.wxs"
+          $scriptLines += "echo       ^<Directory Id=`"ProgramMenuFolder`"^> >> temp\main.wxs"
+          $scriptLines += "echo         ^<Directory Id=`"ApplicationProgramsFolder`" Name=`"Tains`"^> >> temp\main.wxs"
+          $scriptLines += "echo           ^<Component Id=`"ApplicationShortcut`" Guid=`"*`"^> >> temp\main.wxs"
+          $scriptLines += "echo             ^<Shortcut Id=`"ApplicationStartMenuShortcut`" Name=`"Tains`" Description=`"Tains Application`" Target=`"[INSTALLFOLDER]tains_flutter.exe`" WorkingDirectory=`"INSTALLFOLDER`"/^> >> temp\main.wxs"
+          $scriptLines += "echo             ^<RemoveFolder Id=`"RemoveApplicationProgramsFolder`" On=`"uninstall`" /^> >> temp\main.wxs"
+          $scriptLines += "echo             ^<RegistryValue Root=`"HKCU`" Key=`"Software\Tains`" Name=`"installed`" Type=`"integer`" Value=`"1`" KeyPath=`"yes`" /^> >> temp\main.wxs"
+          $scriptLines += "echo           ^</Component^> >> temp\main.wxs"
+          $scriptLines += "echo         ^</Directory^> >> temp\main.wxs"
+          $scriptLines += "echo       ^</Directory^> >> temp\main.wxs"
+          $scriptLines += "echo     ^</Directory^> >> temp\main.wxs"
+          $scriptLines += "echo   ^</Product^> >> temp\main.wxs"
+          $scriptLines += "echo ^</Wix^> >> temp\main.wxs"
+          $scriptLines += ""
+          $scriptLines += "rem Compile"
+          $scriptLines += "`"%WIX%\candle.exe`" temp\main.wxs temp\files.wxs -ext WixUIExtension -out temp\"
+          $scriptLines += ""
+          $scriptLines += "rem Link"
+          $scriptLines += "`"%WIX%\light.exe`" temp\main.wixobj temp\files.wixobj -ext WixUIExtension -out `"%OUTPUT%`" -b `"%SOURCE%`" -cultures:en-us"
+          $scriptLines += ""
+          $scriptLines += "echo MSI installer creation complete: %OUTPUT%"
+          
+          # 将脚本内容写入文件
+          Set-Content -Path "create_msi.bat" -Value ($scriptLines -join "`r`n") -Encoding UTF8
+          
+          # Run batch script
+          Write-Host "Running batch script to create MSI..."
+          & cmd.exe /c create_msi.bat
+          
+          # Check final output
+          if (-Not (Test-Path "build\windows\Tains.msi")) {
+            Write-Error "Error: MSI creation failed!"
+            exit 1
+          } else {
+            Write-Host "MSI file successfully created: build\windows\Tains.msi"
+          }
+
+      - name: Upload Windows Build Artifact # Upload Windows build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build # Artifact name
+          path: |
+            build\windows\dist\Tains
+            build\windows\Tains.zip
+            build\windows\Tains.msi
+          retention-days: 7 # Retention days (optional)
+
+  # --- 构建 macOS 版本 ---
+  build-macos:
+    name: Build macOS App # 作业名称
+    runs-on: macos-latest # 指定作业运行在macOS 13 (Ventura)操作系统上
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4 # 获取代码
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # 使用 stable 通道
+
+      - name: Enable macOS Desktop # 确保启用macOS桌面支持
+        run: flutter config --enable-macos-desktop
+
+      - name: Get Dependencies # 获取项目依赖
+        run: flutter pub get
+
+      # - name: Run Flutter Doctor (Optional) # 可选的 Doctor 检查
+      #   run: flutter doctor -v
+
+      - name: Apply Patches # 应用补丁文件以修复兼容性问题
+        run: |
+          PLUGIN_PATH=$(find $HOME/.pub-cache -path "*macos_window_utils-*/macos/Classes" -type d | head -n 1)
+          if [ -n "$PLUGIN_PATH" ]; then
+            echo "找到插件路径: $PLUGIN_PATH"
+            cp -f patches/macos_window_utils/macos/Classes/MainFlutterWindowManipulator.swift $PLUGIN_PATH/
+            echo "已复制补丁文件"
+          else
+            echo "错误: 无法找到macos_window_utils插件路径"
+            exit 1
+          fi
+
+      - name: Build macOS Release # 构建 macOS 发布版本
+        run: flutter build macos --release # 构建 macOS 的命令
+
+      - name: Install create-dmg # 安装创建DMG的工具
+        run: brew install create-dmg
+
+      - name: Create DMG # 创建DMG安装包
+        run: |
+          APP_NAME=$(ls build/macos/Build/Products/Release/ | grep '\.app$' | head -n 1)
+          if [ -z "$APP_NAME" ]; then
+            echo "错误: 未找到.app文件"
+            exit 1
+          fi
+          
+          mkdir -p build/dmg
+          create-dmg \
+            --volname "Tains" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME" 200 190 \
+            --hide-extension "$APP_NAME" \
+            --app-drop-link 600 185 \
+            "build/dmg/Tains.dmg" \
+            "build/macos/Build/Products/Release/$APP_NAME"
+
+      - name: Upload macOS Build Artifact # 上传 macOS 构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build # 产物名称
+          # 上传DMG文件和原始app包
+          path: |
+            build/macos/Build/Products/Release/
+            build/dmg/Tains.dmg
+          retention-days: 7 # 产物保留天数 (可选)
