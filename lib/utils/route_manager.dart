@@ -20,8 +20,15 @@ class RouteManager {
               ).checkLoginStatus(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              return Center(
+                child: const SizedBox(
+                  height: 26,
+                  width: 26,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
               );
             }
 

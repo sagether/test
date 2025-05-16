@@ -8,27 +8,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('首页'),
-        actions: [
-          Consumer<UserState>(
-            builder: (context, userState, child) {
-              return TextButton(
-                onPressed: () async {
-                  await userState.logout();
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  }
-                },
-                child: Text(
-                  '退出登录 (${userState.accountName})',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       body: Center(
         child: Consumer<UserState>(
           builder: (context, userState, child) {
