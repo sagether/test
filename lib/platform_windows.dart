@@ -40,36 +40,37 @@ Widget buildWindowsUI(Widget child) {
     child: Column(
       children: [
         // 窗口标题栏 - 完全透明，高度最小化
-        // Stack(
-        //   children: [
-        //     WindowTitleBarBox(
-        //       child: Container(
-        //         height: 1, // 设置标题栏高度为最小值
-        //         color: Colors.transparent,
-        //         child: Row(
-        //           children: [
-        //             // 左侧空白区域，用于拖动窗口，隐藏标题和图标
-        //             Expanded(
-        //               child: MoveWindow(
-        //                 child: Container(color: Colors.transparent),
-        //               ),
-        //             ),
-        //             // 右侧窗口按钮
-        //             const WindowButtons(),
-        //           ],
-        //         ),
-        //       ),
-        //     ),
-        //   ],
-        // ),
+        Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              child: WindowTitleBarBox(
+                child: Container(
+                  height: 1, // 设置标题栏高度为最小值
+                  color: Colors.transparent,
+                  child: Row(
+                    children: [
+                      // 左侧空白区域，用于拖动窗口，隐藏标题和图标
+                      Expanded(
+                        child: MoveWindow(
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      // 右侧窗口按钮
+                      const WindowButtons(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         // 内容区域
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(color: Colors.transparent),
-              child: child,
-            ),
+          child: Container(
+            decoration: BoxDecoration(color: Colors.transparent),
+            child: child,
           ),
         ),
       ],
