@@ -37,40 +37,35 @@ class WindowButtons extends StatelessWidget {
 Widget buildWindowsUI(Widget child) {
   return Container(
     decoration: BoxDecoration(color: Colors.transparent),
-    child: Column(
+    child: Stack(
       children: [
-        // 窗口标题栏 - 完全透明，高度最小化
-        Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              child: WindowTitleBarBox(
-                child: Container(
-                  height: 1, // 设置标题栏高度为最小值
-                  color: Colors.transparent,
-                  child: Row(
-                    children: [
-                      // 左侧空白区域，用于拖动窗口，隐藏标题和图标
-                      Expanded(
-                        child: MoveWindow(
-                          child: Container(color: Colors.transparent),
-                        ),
-                      ),
-                      // 右侧窗口按钮
-                      const WindowButtons(),
-                    ],
+        // 内容区域
+        Container(
+          decoration: BoxDecoration(color: Colors.transparent),
+          child: child,
+        ),
+        // 窗口标题栏 - 完全透明，固定高度
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: WindowTitleBarBox(
+            child: Container(
+              height: 32, // 标题栏固定高度
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  // 左侧空白区域，用于拖动窗口
+                  Expanded(
+                    child: MoveWindow(
+                      child: Container(color: Colors.transparent),
+                    ),
                   ),
-                ),
+                  // 右侧窗口按钮
+                  const WindowButtons(),
+                ],
               ),
             ),
-          ],
-        ),
-        // 内容区域
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(color: Colors.transparent),
-            child: child,
           ),
         ),
       ],
