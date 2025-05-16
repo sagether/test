@@ -46,9 +46,9 @@ void main() async {
     doWhenWindowReady(() {
       const initialSize = Size(1400, 900);
       appWindow.minSize = initialSize;
+      appWindow.size = initialSize;
       appWindow.alignment = Alignment.center;
-      appWindow.title = "";
-      // 显示窗口
+      appWindow.title = "Tains";
       appWindow.show();
     });
   }
