@@ -157,8 +157,8 @@ bool Win32Window::Create(const std::wstring &title,
   int window_x = (screen_width - window_width) / 2;
   int window_y = (screen_height - window_height) / 2;
 
-  // 浣跨敤鏍囧噯绐楀彛鏍峰紡锛屼繚鐣欐爣棰樻爮浠ュ疄鐜版矇娴稿紡鏁堟灉
-  DWORD window_style = WS_OVERLAPPEDWINDOW;
+  // 使用无边框窗口样式，移除标准窗口装饰
+  DWORD window_style = WS_POPUP | WS_THICKFRAME;
 
   HWND window = CreateWindow(
       window_class, title.c_str(), window_style,
@@ -171,9 +171,9 @@ bool Win32Window::Create(const std::wstring &title,
     return false;
   }
 
-  // 璁剧疆鎵╁睍绐楀彛鏍峰紡
+  // 设置扩展窗口样式
   LONG ex_style = GetWindowLong(window, GWL_EXSTYLE);
-  SetWindowLong(window, GWL_EXSTYLE, ex_style);
+  SetWindowLong(window, GWL_EXSTYLE, ex_style | WS_EX_APPWINDOW);
 
   // 娌夋蹈寮忔爣棰樻爮鐨勫熀鏈缃湪FlutterWindow::OnCreate涓畬鎴?  // 杩欓噷涓嶅啀閲嶅璁剧疆锛岄伩鍏嶅啿绐?
   UpdateTheme(window);

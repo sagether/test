@@ -49,22 +49,20 @@ Widget buildWindowsUI(Widget child) {
           left: 0,
           right: 0,
           top: 0,
-          child: WindowTitleBarBox(
-            child: Container(
-              height: 32, // 标题栏固定高度
-              color: Colors.transparent,
-              child: Row(
-                children: [
-                  // 左侧空白区域，用于拖动窗口
-                  Expanded(
-                    child: MoveWindow(
-                      child: Container(color: Colors.transparent),
-                    ),
+          child: Container(
+            height: 32, // 标题栏固定高度
+            color: Colors.transparent,
+            child: Row(
+              children: [
+                // 左侧空白区域，用于拖动窗口
+                Expanded(
+                  child: MoveWindow(
+                    child: Container(color: Colors.transparent),
                   ),
-                  // 右侧窗口按钮
-                  const WindowButtons(),
-                ],
-              ),
+                ),
+                // 右侧窗口按钮
+                const WindowButtons(),
+              ],
             ),
           ),
         ),
