@@ -12,7 +12,7 @@
 // 检查 Windows SDK 版本
 #include <VersionHelpers.h>
 
-// 仅在旧版 SDK 中定义这些常量
+// 定义缺失的 DWM 常量和类型
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
@@ -25,18 +25,14 @@
 #define DWMWA_BORDER_COLOR 34
 #endif
 
-// 仅在需要时定义枚举
-#if !defined(NTDDI_WIN10_RS4) || (NTDDI_VERSION < NTDDI_WIN10_RS4)
-#ifndef DWM_WINDOW_CORNER_PREFERENCE
-typedef enum _DWM_WINDOW_CORNER_PREFERENCE
+// 始终定义这些类型，但使用不同的名称避免冲突
+typedef enum _MY_DWM_WINDOW_CORNER_PREFERENCE
 {
-    DWMWCP_DEFAULT      = 0,
-    DWMWCP_DONOTROUND  = 1,
-    DWMWCP_ROUND       = 2,
-    DWMWCP_ROUNDSMALL  = 3
-} DWM_WINDOW_CORNER_PREFERENCE;
-#endif
-#endif
+    MY_DWMWCP_DEFAULT      = 0,
+    MY_DWMWCP_DONOTROUND  = 1,
+    MY_DWMWCP_ROUND       = 2,
+    MY_DWMWCP_ROUNDSMALL  = 3
+} MY_DWM_WINDOW_CORNER_PREFERENCE;
 
 #include "resource.h"
 
@@ -207,7 +203,7 @@ bool Win32Window::Create(const std::wstring &title,
   
   // 尝试设置窗口圆角
   if (IsWindows10OrGreater()) {
-    DWM_WINDOW_CORNER_PREFERENCE corner = DWMWCP_ROUND;
+    int corner = MY_DWMWCP_ROUND;
     DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
   }
 
