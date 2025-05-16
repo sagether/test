@@ -36,14 +36,14 @@ dependencies:
     cupertino_icons: ^1.0.8
     macos_window_utils: ^1.6.0
     bitsdojo_window: ^0.1.6
-    shared_preferences: ^2.2.2
+    shared_preferences: ^2.5.3
     provider: ^6.1.1
     flutter_svg: ^2.0.9
     google_fonts: ^6.1.0
     page_transition: ^2.2.1
     toastification: ^3.0.2
     http: ^1.2.0
-    dio: ^5.4.1
+    dio: ^5.8.0+1
 
 dev_dependencies:
     flutter_test:
