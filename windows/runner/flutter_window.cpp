@@ -54,9 +54,8 @@ bool FlutterWindow::OnCreate()
     return false;
   }
 
-  // 设置窗口背景色为透明
-  HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 0));
-  SetClassLongPtr(GetHandle(), GCLP_HBRBACKGROUND, (LONG_PTR)hBrush);
+  // 移除窗口默认背景色设置，因为我们要使用完全透明
+  SetClassLongPtr(GetHandle(), GCLP_HBRBACKGROUND, (LONG_PTR) nullptr);
 
   // 强制使用深色模式
   BOOL enable_dark_mode = TRUE;
@@ -69,16 +68,16 @@ bool FlutterWindow::OnCreate()
                         &corner_preference, sizeof(corner_preference));
 
   // 实现完全沉浸式标题栏
-  MARGINS margins = {-1, -1, -1, -1}; // 负值表示扩展到整个窗口
+  MARGINS margins = {0, 0, 0, 1}; // 只扩展顶部区域
   DwmExtendFrameIntoClientArea(GetHandle(), &margins);
-
-  // 设置标题栏为透明 - 使用数值2代替枚举
-  int ncrp = 2; // DWMNCRP_ENABLED 的值
-  DwmSetWindowAttribute(GetHandle(), DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
 
   // 启用标题栏自定义绘制
   BOOL enable = TRUE;
   DwmSetWindowAttribute(GetHandle(), DWMWA_ALLOW_NCPAINT, &enable, sizeof(enable));
+
+  // 设置标题栏为透明
+  int ncrp = 2; // DWMNCRP_ENABLED
+  DwmSetWindowAttribute(GetHandle(), DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
 
   // 尝试设置亚克力效果（更明显的毛玻璃效果）
   int backdropType = SYSTEMBACKDROP_ACRYLIC;
