@@ -13,55 +13,63 @@ class HomeScreen extends StatelessWidget {
 
     return PlatformContainer(
       child: Scaffold(
-        body: Row(
-          children: [
-            // 左侧边栏
-            const LeftSidebar(),
+        backgroundColor: Colors.transparent,
+        body: Material(
+          color: Colors.transparent,
+          child: Row(
+            children: [
+              // 左侧边栏
+              const LeftSidebar(),
 
-            // 主内容区域
-            Expanded(
-              child: Container(
-                color: Colors.black,
-                child: Center(
-                  child: Consumer<UserState>(
-                    builder: (context, userState, child) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '欢迎回来，${userState.accountName}',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : Colors.black,
+              // 主内容区域
+              Expanded(
+                child: Container(
+                  color: Colors.black,
+                  child: Center(
+                    child: Consumer<UserState>(
+                      builder: (context, userState, child) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '欢迎回来，${userState.accountName}',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '管理员权限: ${userState.isAdmin ? "是" : "否"}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  isDarkMode ? Colors.white70 : Colors.black87,
+                            const SizedBox(height: 16),
+                            Text(
+                              '管理员权限: ${userState.isAdmin ? "是" : "否"}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color:
+                                    isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            '用户类型: ${userState.userTypes.join(", ")}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  isDarkMode ? Colors.white70 : Colors.black87,
+                            const SizedBox(height: 12),
+                            Text(
+                              '用户类型: ${userState.userTypes.join(", ")}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color:
+                                    isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87,
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
