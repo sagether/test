@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:macos_window_utils/widgets/transparent_macos_sidebar.dart'
@@ -52,7 +53,7 @@ class PlatformContainer extends StatelessWidget {
   Widget _buildStandardUI(BuildContext context) {
     if (!kIsWeb && Platform.isWindows) {
       // Windows平台使用透明背景
-      return Container(color: Colors.transparent, child: child);
+      return WindowBorder(color: Colors.transparent, width: 1, child: child);
     } else {
       // 其他平台使用常规背景
       return Container(
