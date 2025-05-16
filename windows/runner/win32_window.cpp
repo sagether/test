@@ -157,8 +157,8 @@ bool Win32Window::Create(const std::wstring &title,
   int window_x = (screen_width - window_width) / 2;
   int window_y = (screen_height - window_height) / 2;
 
-  // 使用无边框窗口样式，移除标准窗口装饰
-  DWORD window_style = WS_POPUP | WS_THICKFRAME;
+  // 使用细边框窗口样式
+  DWORD window_style = WS_POPUP | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
   HWND window = CreateWindow(
       window_class, title.c_str(), window_style,
@@ -173,7 +173,27 @@ bool Win32Window::Create(const std::wstring &title,
 
   // 设置扩展窗口样式
   LONG ex_style = GetWindowLong(window, GWL_EXSTYLE);
-  SetWindowLong(window, GWL_EXSTYLE, ex_style | WS_EX_APPWINDOW);
+  SetWindowLong(window, GWL_EXSTYLE, ex_style | WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+
+  // 设置DWM属性
+  BOOL value = TRUE;
+  DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+  
+  // 设置窗口圆角
+  DWM_WINDOW_CORNER_PREFERENCE corner = DWMWCP_ROUND;
+  DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+
+  // 设置非客户区域渲染策略
+  DWMNCRENDERINGPOLICY ncrp = DWMNCRP_ENABLED;
+  DwmSetWindowAttribute(window, DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
+
+  // 扩展Frame到客户区
+  MARGINS margins = {0, 0, 0, 1};
+  DwmExtendFrameIntoClientArea(window, &margins);
+
+  // 更新窗口样式
+  SetWindowPos(window, nullptr, 0, 0, 0, 0,
+               SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
 
   // 娌夋蹈寮忔爣棰樻爮鐨勫熀鏈缃湪FlutterWindow::OnCreate涓畬鎴?  // 杩欓噷涓嶅啀閲嶅璁剧疆锛岄伩鍏嶅啿绐?
   UpdateTheme(window);
