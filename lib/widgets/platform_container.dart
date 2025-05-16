@@ -53,7 +53,7 @@ class PlatformContainer extends StatelessWidget {
   Widget _buildStandardUI(BuildContext context) {
     if (!kIsWeb && Platform.isWindows) {
       // Windows平台使用透明背景
-      return WindowBorder(color: Colors.transparent, width: 1, child: child);
+      return Container(color: Colors.transparent, child: child);
     } else {
       // 其他平台使用常规背景
       return Container(
