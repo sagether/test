@@ -7,46 +7,35 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
-// 由于最新的Windows SDK已经包含这些定义，我们仅在需要时定义这些值
-#ifndef DWMWA_WINDOW_CORNER_PREFERENCE
-  #define DWMWA_WINDOW_CORNER_PREFERENCE 33
+// 瀹氫箟DWM_WINDOW_CORNER_PREFERENCE鏋氫妇锛堝鏋滅紪璇戝櫒娌℃湁瀹氫箟锛?#ifndef DWMWCP_ROUND
+enum DWM_WINDOW_CORNER_PREFERENCE
+{
+  DWMWCP_DEFAULT = 0,
+  DWMWCP_DONOTROUND = 1,
+  DWMWCP_ROUND = 2,
+  DWMWCP_ROUNDSMALL = 3
+};
 #endif
 
-// 如果DWM_WINDOW_CORNER_PREFERENCE未定义，则定义它
-// 我们不使用typedef enum来避免与系统定义冲突
-#ifndef DWMWCP_DEFAULT
-  #define DWMWCP_DEFAULT 0
+// 瀹氫箟DWMWA_WINDOW_CORNER_PREFERENCE锛堝鏋滅紪璇戝櫒娌℃湁瀹氫箟锛?#ifndef DWMWA_WINDOW_CORNER_PREFERENCE
+#define DWMWA_WINDOW_CORNER_PREFERENCE 33
 #endif
 
-#ifndef DWMWCP_DONOTROUND
-  #define DWMWCP_DONOTROUND 1
+// 瀹氫箟DWMWA_MICA_EFFECT锛堝鏋滅紪璇戝櫒娌℃湁瀹氫箟锛?#ifndef DWMWA_MICA_EFFECT
+#define DWMWA_MICA_EFFECT 1029
 #endif
 
-#ifndef DWMWCP_ROUND
-  #define DWMWCP_ROUND 2
-#endif
-
-#ifndef DWMWCP_ROUNDSMALL
-  #define DWMWCP_ROUNDSMALL 3
-#endif
-
-// 定义DWMWA_MICA_EFFECT（如果编译器没有定义）
-#ifndef DWMWA_MICA_EFFECT
-  #define DWMWA_MICA_EFFECT 1029
-#endif
-
-// 定义Acrylic效果
+// 瀹氫箟Acrylic鏁堟灉
 #ifndef DWMWA_SYSTEMBACKDROP_TYPE
-  #define DWMWA_SYSTEMBACKDROP_TYPE 38
+#define DWMWA_SYSTEMBACKDROP_TYPE 38
 #endif
 
-// 背景类型，仅在本文件内使用，避免命名冲突
-#ifndef SYSTEMBACKDROP_NONE
-  #define SYSTEMBACKDROP_NONE 0
-  #define SYSTEMBACKDROP_MICA 1    // 云母效果
-  #define SYSTEMBACKDROP_ACRYLIC 2 // 亚克力效果
-  #define SYSTEMBACKDROP_TABBED 3  // 选项卡效果
-#endif
+// 鑳屾櫙绫诲瀷
+enum SYSTEMBACKDROP_TYPE
+{
+  SYSTEMBACKDROP_NONE = 0,
+  SYSTEMBACKDROP_MICA = 1,    // 浜戞瘝鏁堟灉
+  SYSTEMBACKDROP_ACRYLIC = 2, // 浜氬厠鍔涙晥鏋?  SYSTEMBACKDROP_TABBED = 3   // 閫夐」鍗℃晥鏋?};
 
 FlutterWindow::FlutterWindow(const flutter::DartProject &project)
     : project_(project) {}
@@ -60,44 +49,43 @@ bool FlutterWindow::OnCreate()
     return false;
   }
 
-  // 移除窗口默认背景色设置，因为我们要使用完全透明
+  // 绉婚櫎绐楀彛榛樿鑳屾櫙鑹茶缃紝鍥犱负鎴戜滑瑕佷娇鐢ㄥ畬鍏ㄩ€忔槑
   SetClassLongPtr(GetHandle(), GCLP_HBRBACKGROUND, (LONG_PTR) nullptr);
 
-  // 强制使用深色模式
+  // 寮哄埗浣跨敤娣辫壊妯″紡
   BOOL enable_dark_mode = TRUE;
   DwmSetWindowAttribute(GetHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE,
                         &enable_dark_mode, sizeof(enable_dark_mode));
 
-  // 设置圆角窗口
-  DWORD corner_preference = DWMWCP_ROUND;
+  // 璁剧疆鍦嗚绐楀彛
+  DWM_WINDOW_CORNER_PREFERENCE corner_preference = DWMWCP_ROUND;
   DwmSetWindowAttribute(GetHandle(), DWMWA_WINDOW_CORNER_PREFERENCE,
                         &corner_preference, sizeof(corner_preference));
 
-  // 实现完全沉浸式标题栏
-  MARGINS margins = {0, 0, 0, 1}; // 可扩展顶部区域
-  DwmExtendFrameIntoClientArea(GetHandle(), &margins);
+  // 瀹炵幇瀹屽叏娌夋蹈寮忔爣棰樻爮
+  MARGINS margins = {0, 0, 0, 1}; // 鍙墿灞曢《閮ㄥ尯鍩?  DwmExtendFrameIntoClientArea(GetHandle(), &margins);
 
-  // 启用标题栏自定义绘制
+  // 鍚敤鏍囬鏍忚嚜瀹氫箟缁樺埗
   BOOL enable = TRUE;
   DwmSetWindowAttribute(GetHandle(), DWMWA_ALLOW_NCPAINT, &enable, sizeof(enable));
 
-  // 设置标题栏为透明
+  // 璁剧疆鏍囬鏍忎负閫忔槑
   int ncrp = 2; // DWMNCRP_ENABLED
   DwmSetWindowAttribute(GetHandle(), DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
 
-  // 尝试设置亚克力效果（更明显的毛玻璃效果）
+  // 灏濊瘯璁剧疆浜氬厠鍔涙晥鏋滐紙鏇存槑鏄剧殑姣涚幓鐠冩晥鏋滐級
   int backdropType = SYSTEMBACKDROP_ACRYLIC;
   HRESULT hr = DwmSetWindowAttribute(GetHandle(), DWMWA_SYSTEMBACKDROP_TYPE,
                                      &backdropType, sizeof(backdropType));
 
-  // 如果亚克力效果失败，尝试使用Mica效果
+  // 濡傛灉浜氬厠鍔涙晥鏋滃け璐ワ紝灏濊瘯浣跨敤Mica鏁堟灉
   if (FAILED(hr))
   {
     backdropType = SYSTEMBACKDROP_MICA;
     DwmSetWindowAttribute(GetHandle(), DWMWA_SYSTEMBACKDROP_TYPE,
                           &backdropType, sizeof(backdropType));
 
-    // 如果系统不支持新的API，使用旧的Mica API
+    // 濡傛灉绯荤粺涓嶆敮鎸佹柊鐨凙PI锛屼娇鐢ㄦ棫鐨凪ica API
     BOOL enable_mica = TRUE;
     DwmSetWindowAttribute(GetHandle(), DWMWA_MICA_EFFECT,
                           &enable_mica, sizeof(enable_mica));

@@ -3,30 +3,26 @@
 
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
-#include "flutter/generated_plugin_registrant.h"
-#include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
 
 #include <memory>
 
 #include "win32_window.h"
 
 // A window that does nothing but host a Flutter view.
-class FlutterWindow : public Win32Window
-{
-public:
+class FlutterWindow : public Win32Window {
+ public:
   // Creates a new FlutterWindow hosting a Flutter view running |project|.
-  explicit FlutterWindow(const flutter::DartProject &project);
+  explicit FlutterWindow(const flutter::DartProject& project);
   virtual ~FlutterWindow();
 
-protected:
+ protected:
   // Win32Window:
   bool OnCreate() override;
   void OnDestroy() override;
   LRESULT MessageHandler(HWND window, UINT const message, WPARAM const wparam,
                          LPARAM const lparam) noexcept override;
 
-private:
+ private:
   // The project to run.
   flutter::DartProject project_;
 
@@ -34,4 +30,4 @@ private:
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
 };
 
-#endif // RUNNER_FLUTTER_WINDOW_H_
+#endif  // RUNNER_FLUTTER_WINDOW_H_
