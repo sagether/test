@@ -62,6 +62,7 @@ class AuthService {
 
       return AuthResult(success: true, user: user);
     } catch (e) {
+      print(e.toString());
       return AuthResult(success: false, errorMessage: '登录失败: ${e.toString()}');
     }
   }

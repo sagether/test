@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
+import '../utils/route_manager.dart';
 
 /// Toast工具类，封装toastification库
 /// 提供全局访问的toast提示功能
@@ -14,7 +15,7 @@ class ToastHelper {
   ToastHelper._internal();
 
   /// 全局导航键，用于在没有context的情况下显示toast
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  GlobalKey<NavigatorState> get navigatorKey => RouteManager.navigatorKey;
 
   /// 显示成功提示
   void showSuccess(String message, {Duration? duration}) {

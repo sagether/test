@@ -7,6 +7,7 @@ import 'package:toastification/toastification.dart';
 
 // 导入平台兼容层
 import 'platform_imports.dart';
+import 'models/user_state.dart';
 
 // 仅在Windows平台导入Windows特定实现
 import 'platform_windows.dart'
@@ -20,7 +21,6 @@ import 'package:macos_window_utils/widgets/transparent_macos_sidebar.dart'
 
 // 导入应用程序组件
 import 'screens/login_screen.dart';
-import 'services/user_provider.dart';
 import 'utils/route_manager.dart';
 import 'utils/toast_helper.dart';
 
@@ -60,12 +60,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      providers: [ChangeNotifierProvider(create: (_) => UserState())],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
-        // 使用全局导航键，用于在没有context的情况下显示toast
-        navigatorKey: toast.navigatorKey,
+        // 使用全局导航键，用于在没有context的情况下显示toast和导航
+        navigatorKey: RouteManager.navigatorKey,
         // 使用builder添加ToastificationConfigProvider
         builder: (context, child) {
           return ToastificationConfigProvider(
@@ -81,6 +81,15 @@ class MyApp extends StatelessWidget {
         },
         theme: ThemeData.light().copyWith(
           scaffoldBackgroundColor: Colors.transparent,
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+            },
+          ),
           textTheme: const TextTheme(
             displayLarge: TextStyle(
               fontFamily: 'System',
@@ -113,6 +122,15 @@ class MyApp extends StatelessWidget {
         ),
         darkTheme: ThemeData.dark().copyWith(
           scaffoldBackgroundColor: Colors.transparent,
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+            },
+          ),
           textTheme: const TextTheme(
             displayLarge: TextStyle(
               fontFamily: 'System',
