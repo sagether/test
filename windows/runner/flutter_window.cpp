@@ -18,16 +18,6 @@ enum DWM_WINDOW_CORNER_PREFERENCE
 };
 #endif
 
-// 定义DWMNCRENDERINGPOLICY枚举（如果编译器没有定义）
-#ifndef DWMNCRP_ENABLED
-typedef enum _DWMNCRENDERINGPOLICY
-{
-  DWMNCRP_USEWINDOWSTYLE = 0,
-  DWMNCRP_DISABLED = 1,
-  DWMNCRP_ENABLED = 2
-} DWMNCRENDERINGPOLICY;
-#endif
-
 // 定义DWMWA_WINDOW_CORNER_PREFERENCE（如果编译器没有定义）
 #ifndef DWMWA_WINDOW_CORNER_PREFERENCE
 #define DWMWA_WINDOW_CORNER_PREFERENCE 33
@@ -82,8 +72,8 @@ bool FlutterWindow::OnCreate()
   MARGINS margins = {-1, -1, -1, -1}; // 负值表示扩展到整个窗口
   DwmExtendFrameIntoClientArea(GetHandle(), &margins);
 
-  // 设置标题栏为透明
-  DWMNCRENDERINGPOLICY ncrp = DWMNCRP_ENABLED;
+  // 设置标题栏为透明 - 使用数值2代替枚举
+  int ncrp = 2; // DWMNCRP_ENABLED 的值
   DwmSetWindowAttribute(GetHandle(), DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
 
   // 启用标题栏自定义绘制
