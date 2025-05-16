@@ -2,6 +2,10 @@
 
 #include <dwmapi.h>
 #include <flutter_windows.h>
+#include <windowsx.h>
+#include <commctrl.h>
+
+#pragma comment(lib, "comctl32.lib")
 
 #include "resource.h"
 
@@ -157,8 +161,8 @@ bool Win32Window::Create(const std::wstring &title,
   int window_x = (screen_width - window_width) / 2;
   int window_y = (screen_height - window_height) / 2;
 
-  // 使用细边框窗口样式
-  DWORD window_style = WS_POPUP | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+  // 使用无边框但可调整大小的窗口样式
+  DWORD window_style = WS_POPUP | WS_THICKFRAME | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
   HWND window = CreateWindow(
       window_class, title.c_str(), window_style,
@@ -173,7 +177,7 @@ bool Win32Window::Create(const std::wstring &title,
 
   // 设置扩展窗口样式
   LONG ex_style = GetWindowLong(window, GWL_EXSTYLE);
-  SetWindowLong(window, GWL_EXSTYLE, ex_style | WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+  SetWindowLong(window, GWL_EXSTYLE, ex_style | WS_EX_APPWINDOW);
 
   // 设置DWM属性
   BOOL value = TRUE;
@@ -187,9 +191,55 @@ bool Win32Window::Create(const std::wstring &title,
   DWMNCRENDERINGPOLICY ncrp = DWMNCRP_ENABLED;
   DwmSetWindowAttribute(window, DWMWA_NCRENDERING_POLICY, &ncrp, sizeof(ncrp));
 
-  // 扩展Frame到客户区
-  MARGINS margins = {0, 0, 0, 1};
-  DwmExtendFrameIntoClientArea(window, &margins);
+  // 设置窗口边框颜色为深色
+  COLORREF color = 0x00333333;
+  DwmSetWindowAttribute(window, DWMWA_BORDER_COLOR, &color, sizeof(color));
+
+  // 设置窗口Hit测试处理
+  SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+  SetWindowSubclass(window, [](HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR, DWORD_PTR) -> LRESULT {
+    switch (msg) {
+      case WM_NCCALCSIZE: {
+        if (wp == TRUE) {
+          // 调整非客户区大小，使边框最小化
+          NCCALCSIZE_PARAMS* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);
+          params->rgrc[0].left += 1;
+          params->rgrc[0].top += 1;
+          params->rgrc[0].right -= 1;
+          params->rgrc[0].bottom -= 1;
+          return 0;
+        }
+        break;
+      }
+      case WM_NCHITTEST: {
+        POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+        ScreenToClient(hwnd, &pt);
+        
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        
+        // 定义更窄的边框区域（4像素）
+        const int border = 4;
+        
+        // 返回适当的命中测试值以支持窗口调整大小
+        if (pt.y < border) {
+          if (pt.x < border) return HTTOPLEFT;
+          if (pt.x >= rc.right - border) return HTTOPRIGHT;
+          return HTTOP;
+        }
+        if (pt.y >= rc.bottom - border) {
+          if (pt.x < border) return HTBOTTOMLEFT;
+          if (pt.x >= rc.right - border) return HTBOTTOMRIGHT;
+          return HTBOTTOM;
+        }
+        if (pt.x < border) return HTLEFT;
+        if (pt.x >= rc.right - border) return HTRIGHT;
+        
+        return HTCLIENT;
+      }
+    }
+    return DefSubclassProc(hwnd, msg, wp, lp);
+  }, 0, 0);
 
   // 更新窗口样式
   SetWindowPos(window, nullptr, 0, 0, 0, 0,
