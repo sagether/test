@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -24,9 +25,32 @@ import 'screens/login_screen.dart';
 import 'utils/route_manager.dart';
 import 'utils/toast_helper.dart';
 
+// 用于跟踪上一次按键事件的时间
+DateTime? _lastKeyEventTime;
+const _keyEventThreshold = Duration(milliseconds: 50); // 设置一个合理的时间阈值
+
 void main() async {
   // 确保Flutter绑定初始化
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 配置键盘事件处理
+  if (!kIsWeb && Platform.isMacOS) {
+    // 添加键盘事件过滤器
+    ServicesBinding.instance.keyboard.addHandler((KeyEvent event) {
+      if (event is KeyDownEvent) {
+        final now = DateTime.now();
+        if (_lastKeyEventTime != null) {
+          final difference = now.difference(_lastKeyEventTime!);
+          if (difference < _keyEventThreshold) {
+            // 如果两次事件间隔太短，则认为是重复事件
+            return true;
+          }
+        }
+        _lastKeyEventTime = now;
+      }
+      return false;
+    });
+  }
 
   // 仅在macOS平台初始化窗口操作工具
   if (!kIsWeb && Platform.isMacOS) {

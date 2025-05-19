@@ -142,6 +142,9 @@ class _LoginFormState extends State<LoginForm> {
       focusNode: _usernameFocusNode,
       keyboardType: TextInputType.text,
       style: TextStyle(color: textColor, fontSize: 15),
+      cursorColor: isDarkMode ? Colors.white70 : Colors.black87,
+      cursorHeight: 16,
+      cursorWidth: 1.5,
       decoration: InputDecoration(
         hintText: '输入账号',
         prefixIcon: Icon(
@@ -185,6 +188,9 @@ class _LoginFormState extends State<LoginForm> {
       focusNode: _passwordFocusNode,
       obscureText: _obscurePassword,
       style: TextStyle(color: textColor, fontSize: 15),
+      cursorColor: isDarkMode ? Colors.white70 : Colors.black87,
+      cursorHeight: 16,
+      cursorWidth: 1.5,
       decoration: InputDecoration(
         hintText: '输入密码',
         prefixIcon: Icon(
