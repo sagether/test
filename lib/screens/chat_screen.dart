@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -9,12 +10,53 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _hasMessages = false;
+  bool _isAiEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {});
+    // 确保在下一帧渲染完成后滚动到底部
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  bool get _hasValidContent {
+    final text = _controller.text;
+    // 检查是否只包含空白字符（空格、换行等）
+    return text.trim().isNotEmpty;
+  }
+
+  void _handleSubmit() {
+    if (_hasValidContent) {
+      setState(() {
+        _hasMessages = true;
+      });
+      // 重置输入框
+      _controller.clear();
+      // TODO: 处理发送逻辑
+    }
   }
 
   @override
@@ -51,27 +93,62 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 // 问题输入框
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                  child: TextField(
-                    controller: _controller,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: '问我任何问题',
-                      hintStyle: TextStyle(
-                        color: textColor.withOpacity(0.3),
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+                  child: Focus(
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent &&
+                          event.logicalKey == LogicalKeyboardKey.enter) {
+                        if (HardwareKeyboard.instance.isShiftPressed) {
+                          // Shift + Enter，插入换行符
+                          final text = _controller.text;
+                          final selection = _controller.selection;
+                          final newText = text.replaceRange(
+                            selection.start,
+                            selection.end,
+                            '\n',
+                          );
+                          _controller.value = TextEditingValue(
+                            text: newText,
+                            selection: TextSelection.collapsed(
+                              offset: selection.start + 1,
+                            ),
+                          );
+                          return KeyEventResult.handled;
+                        } else {
+                          // 只按Enter，发送消息
+                          _handleSubmit();
+                          return KeyEventResult.handled;
+                        }
+                      }
+                      return KeyEventResult.ignored;
+                    },
+                    child: TextField(
+                      controller: _controller,
+                      scrollController: _scrollController,
+                      style: TextStyle(
+                        color: textColor,
                         fontSize: 15,
                         height: 1.5,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
+                      cursorColor: isDarkMode ? Colors.white : Colors.black,
+                      cursorHeight: 16,
+                      decoration: InputDecoration(
+                        hintText: '问我任何问题',
+                        hintStyle: TextStyle(
+                          color: textColor.withOpacity(0.3),
+                          fontSize: 15,
+                          height: 1.5,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
+                      ),
+                      maxLines: 6,
+                      minLines: 1,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _handleSubmit(),
                     ),
-                    maxLines: 6,
-                    minLines: 1,
                   ),
                 ),
 
@@ -89,16 +166,23 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 8,
                   ),
                   child: Row(
                     children: [
-                      // 联网搜索按钮
+                      // 智能体按钮
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          setState(() {
+                            _isAiEnabled = !_isAiEnabled;
+                          });
+                        },
                         icon: Icon(
                           Icons.public,
-                          color: textColor.withOpacity(0.4),
+                          color:
+                              _isAiEnabled
+                                  ? (isDarkMode ? Colors.white : Colors.blue)
+                                  : textColor.withOpacity(0.4),
                           size: 20,
                         ),
                         tooltip: '智能体',
@@ -109,23 +193,30 @@ class _ChatScreenState extends State<ChatScreen> {
                       const Spacer(),
 
                       // 发送按钮
-                      IconButton(
-                        onPressed: () {
-                          if (_controller.text.isNotEmpty) {
-                            setState(() {
-                              _hasMessages = true;
-                            });
-                          }
-                        },
-                        icon: Icon(
-                          Icons.keyboard_return,
-                          color: textColor.withOpacity(0.4),
-                          size: 20,
+                      if (_hasValidContent)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _handleSubmit,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color:
+                                    isDarkMode
+                                        ? Colors.white.withOpacity(0.1)
+                                        : Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.send,
+                                color: isDarkMode ? Colors.white : Colors.blue,
+                                size: 14,
+                              ),
+                            ),
+                          ),
                         ),
-                        tooltip: '发送',
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      ),
                     ],
                   ),
                 ),
