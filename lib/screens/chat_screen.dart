@@ -36,125 +36,98 @@ class _ChatScreenState extends State<ChatScreen> {
 
         // 输入区域
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
           color: backgroundColor,
           child: Container(
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color:
                   isDarkMode
-                      ? Colors.white.withOpacity(0.05)
+                      ? Colors.white.withOpacity(0.03)
                       : Colors.black.withOpacity(0.02),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 问题输入框
-                TextField(
-                  controller: _controller,
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    hintText: '问我任何问题',
-                    hintStyle: TextStyle(
-                      color: textColor.withOpacity(0.3),
-                      fontSize: 14,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  child: TextField(
+                    controller: _controller,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      height: 1.5,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
+                    decoration: InputDecoration(
+                      hintText: '问我任何问题',
+                      hintStyle: TextStyle(
+                        color: textColor.withOpacity(0.3),
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                    ),
+                    maxLines: 6,
+                    minLines: 1,
                   ),
-                  maxLines: 6,
-                  minLines: 1,
                 ),
-                const SizedBox(height: 12),
 
                 // 底部工具栏
-                Row(
-                  children: [
-                    // 联网搜索按钮
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
                         color:
                             isDarkMode
-                                ? Colors.black.withOpacity(0.2)
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.1),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.public,
-                            color: textColor.withOpacity(0.5),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '联网搜索',
-                            style: TextStyle(
-                              color: textColor.withOpacity(0.5),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                                ? Colors.white.withOpacity(0.06)
+                                : Colors.black.withOpacity(0.03),
                       ),
                     ),
-
-                    // 图片按钮
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color:
-                            isDarkMode
-                                ? Colors.black.withOpacity(0.2)
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.1),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      // 联网搜索按钮
+                      IconButton(
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.public,
+                          color: textColor.withOpacity(0.4),
+                          size: 20,
                         ),
+                        tooltip: '智能体',
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                       ),
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: textColor.withOpacity(0.5),
-                        size: 20,
-                      ),
-                    ),
 
-                    const Spacer(),
+                      const Spacer(),
 
-                    // 发送按钮
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color:
-                            isDarkMode
-                                ? Colors.black.withOpacity(0.2)
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              isDarkMode
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.1),
+                      // 发送按钮
+                      IconButton(
+                        onPressed: () {
+                          if (_controller.text.isNotEmpty) {
+                            setState(() {
+                              _hasMessages = true;
+                            });
+                          }
+                        },
+                        icon: Icon(
+                          Icons.keyboard_return,
+                          color: textColor.withOpacity(0.4),
+                          size: 20,
                         ),
+                        tooltip: '发送',
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                       ),
-                      child: Icon(
-                        Icons.keyboard_return,
-                        color: textColor.withOpacity(0.5),
-                        size: 20,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
