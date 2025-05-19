@@ -21,23 +21,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   MenuItem? _selectedItem;
+  final _chatScreen = ChatScreen(key: GlobalKey());
+  final _materialScreen = MaterialScreen();
+  final _taskScreen = TaskScreen();
+  final _knowledgeScreen = KnowledgeScreen();
 
   void _onMenuItemSelected(MenuItem? item) {
     setState(() {
-      _selectedItem = item;
+      // 如果点击已选中的菜单项，则取消选中
+      if (_selectedItem == item) {
+        _selectedItem = null;
+      } else {
+        _selectedItem = item;
+      }
     });
   }
 
-  Widget _getScreen() {
+  int _getScreenIndex() {
     switch (_selectedItem) {
       case MenuItem.material:
-        return const MaterialScreen();
+        return 1;
       case MenuItem.task:
-        return const TaskScreen();
+        return 2;
       case MenuItem.knowledge:
-        return const KnowledgeScreen();
+        return 3;
       default:
-        return const ChatScreen();
+        return 0;
     }
   }
 
@@ -62,7 +71,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 主内容区域
               Expanded(
-                child: Container(color: backgroundColor, child: _getScreen()),
+                child: Container(
+                  color: Colors.transparent,
+                  child: IndexedStack(
+                    index: _getScreenIndex(),
+                    children: [
+                      _chatScreen,
+                      _materialScreen,
+                      _taskScreen,
+                      _knowledgeScreen,
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

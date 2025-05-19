@@ -273,86 +273,52 @@ class LeftSidebar extends StatelessWidget {
   Widget _buildMenuItem({
     required String imagePath,
     required String label,
+    required bool isSelected,
     required bool isDarkMode,
     required VoidCallback onTap,
     required Size iconSize,
-    bool isSelected = false,
   }) {
-    final color = isDarkMode ? Colors.white : Colors.black;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
     final backgroundColor =
         isSelected
             ? (isDarkMode
-                ? Colors.white.withOpacity(0.1)
-                : const Color(0xFF2563EB).withOpacity(0.1))
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05))
             : Colors.transparent;
 
-    return Container(
-      height: 36,
-      margin: const EdgeInsets.only(bottom: 2),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Stack(
-            children: [
-              // 基础内容
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 36,
-                      child: Center(
-                        child: Image.asset(
-                          imagePath,
-                          width: iconSize.width,
-                          height: iconSize.height,
-                          color:
-                              isSelected
-                                  ? (isDarkMode
-                                      ? Colors.white.withOpacity(0.9)
-                                      : Colors.blue[700])
-                                  : color.withOpacity(0.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color:
-                              isSelected
-                                  ? (isDarkMode
-                                      ? Colors.white.withOpacity(0.9)
-                                      : Colors.blue[700])
-                                  : color.withOpacity(0.7),
-                          fontSize: 13,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
-                          height: 1.2,
-                        ),
-                      ),
-                    ),
-                  ],
+          onTap: onTap, // 直接使用onTap回调，选中/反选逻辑在HomeScreen中处理
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  imagePath,
+                  width: iconSize.width,
+                  height: iconSize.height,
                 ),
-              ),
-              // 选中状态边框
-              if (isSelected && isDarkMode)
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color:
+                        isSelected
+                            ? (isDarkMode ? Colors.white : Colors.black)
+                            : textColor.withOpacity(0.5),
+                    fontSize: 13,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
