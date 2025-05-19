@@ -4,15 +4,15 @@ import '../models/user_state.dart';
 
 enum MenuItem { material, task, knowledge }
 
-class LeftSidebar extends StatefulWidget {
-  const LeftSidebar({super.key});
+class LeftSidebar extends StatelessWidget {
+  final MenuItem? selectedItem;
+  final Function(MenuItem?) onMenuItemSelected;
 
-  @override
-  State<LeftSidebar> createState() => _LeftSidebarState();
-}
-
-class _LeftSidebarState extends State<LeftSidebar> {
-  MenuItem _selectedItem = MenuItem.material;
+  const LeftSidebar({
+    super.key,
+    required this.selectedItem,
+    required this.onMenuItemSelected,
+  });
 
   // 定义每个菜单项的图标尺寸
   static const Map<MenuItem, Size> _iconSizes = {
@@ -21,23 +21,15 @@ class _LeftSidebarState extends State<LeftSidebar> {
     MenuItem.knowledge: Size(17, 17),
   };
 
-  void _onMenuItemSelected(MenuItem item) {
-    setState(() {
-      _selectedItem = item;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final backgroundColor =
-        isDarkMode
-            ? Colors.black.withOpacity(0.2) // 更透明的背景，配合毛玻璃效果
-            : const Color(0xFFFAFAFA);
+        isDarkMode ? Colors.black.withOpacity(0.2) : const Color(0xFFFAFAFA);
     final dividerColor =
         isDarkMode
-            ? Colors.white.withOpacity(0.1) // 更柔和的分割线
+            ? Colors.white.withOpacity(0.1)
             : Colors.black.withOpacity(0.06);
 
     return Container(
@@ -53,7 +45,7 @@ class _LeftSidebarState extends State<LeftSidebar> {
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10),
             child: ElevatedButton(
               onPressed: () {
-                // TODO: 处理新会话
+                onMenuItemSelected(null);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black.withOpacity(0.5),
@@ -101,35 +93,35 @@ class _LeftSidebarState extends State<LeftSidebar> {
               children: [
                 _buildMenuItem(
                   imagePath:
-                      _selectedItem == MenuItem.material
+                      selectedItem == MenuItem.material
                           ? 'assets/images/sc_a.png'
                           : 'assets/images/sc.png',
                   label: '素材',
-                  isSelected: _selectedItem == MenuItem.material,
+                  isSelected: selectedItem == MenuItem.material,
                   isDarkMode: isDarkMode,
-                  onTap: () => _onMenuItemSelected(MenuItem.material),
+                  onTap: () => onMenuItemSelected(MenuItem.material),
                   iconSize: _iconSizes[MenuItem.material]!,
                 ),
                 _buildMenuItem(
                   imagePath:
-                      _selectedItem == MenuItem.task
+                      selectedItem == MenuItem.task
                           ? 'assets/images/rw_a.png'
                           : 'assets/images/rw.png',
                   label: '任务',
-                  isSelected: _selectedItem == MenuItem.task,
+                  isSelected: selectedItem == MenuItem.task,
                   isDarkMode: isDarkMode,
-                  onTap: () => _onMenuItemSelected(MenuItem.task),
+                  onTap: () => onMenuItemSelected(MenuItem.task),
                   iconSize: _iconSizes[MenuItem.task]!,
                 ),
                 _buildMenuItem(
                   imagePath:
-                      _selectedItem == MenuItem.knowledge
+                      selectedItem == MenuItem.knowledge
                           ? 'assets/images/zsk_a.png'
                           : 'assets/images/zsk.png',
                   label: '知识库',
-                  isSelected: _selectedItem == MenuItem.knowledge,
+                  isSelected: selectedItem == MenuItem.knowledge,
                   isDarkMode: isDarkMode,
-                  onTap: () => _onMenuItemSelected(MenuItem.knowledge),
+                  onTap: () => onMenuItemSelected(MenuItem.knowledge),
                   iconSize: _iconSizes[MenuItem.knowledge]!,
                 ),
               ],

@@ -7,9 +7,39 @@ import '../models/user_state.dart';
 import '../widgets/left_sidebar.dart';
 import '../platform_windows.dart'
     if (dart.library.js) '../platform_stubs/platform_windows_stub.dart';
+import 'chat_screen.dart';
+import 'material_screen.dart';
+import 'task_screen.dart';
+import 'knowledge_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  MenuItem? _selectedItem;
+
+  void _onMenuItemSelected(MenuItem? item) {
+    setState(() {
+      _selectedItem = item;
+    });
+  }
+
+  Widget _getScreen() {
+    switch (_selectedItem) {
+      case MenuItem.material:
+        return const MaterialScreen();
+      case MenuItem.task:
+        return const TaskScreen();
+      case MenuItem.knowledge:
+        return const KnowledgeScreen();
+      default:
+        return const ChatScreen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,54 +55,14 @@ class HomeScreen extends StatelessWidget {
           child: Row(
             children: [
               // 左侧边栏
-              const LeftSidebar(),
+              LeftSidebar(
+                selectedItem: _selectedItem,
+                onMenuItemSelected: _onMenuItemSelected,
+              ),
 
               // 主内容区域
               Expanded(
-                child: Container(
-                  color: backgroundColor,
-                  child: Center(
-                    child: Consumer<UserState>(
-                      builder: (context, userState, child) {
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '欢迎回来，${userState.accountName}',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              '管理员权限: ${userState.isAdmin ? "是" : "否"}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color:
-                                    isDarkMode
-                                        ? Colors.white70
-                                        : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '用户类型: ${userState.userTypes.join(", ")}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color:
-                                    isDarkMode
-                                        ? Colors.white70
-                                        : Colors.black87,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                child: Container(color: backgroundColor, child: _getScreen()),
               ),
             ],
           ),
